@@ -27,40 +27,108 @@ namespace ParserToyRu
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
+            
+            var LinkToStartPage = "https://www.toy.ru/catalog/boy_transport/?count=45&filterseccode%5B0%5D=transport&PAGEN_8=";
+            var CookieRostov = "Cookie:BITRIX_SM_city=61000001000";
+            var CookieMoscow = "";
 
-            var LinkToStartPage = "https://www.toy.ru/catalog/boy_transport/";
-            var request = (HttpWebRequest)WebRequest.Create(LinkToStartPage);
+            int pageNum = 1;
+            var ListOfLinks = new List<string>();
+            while (true)
+            {
+                var href = LinkToStartPage + pageNum.ToString();
+                var pageContent = GetPageFromSite(href,CookieRostov);
+                var parser = new HtmlParser();
+                var doc = parser.ParseDocument(pageContent);
+                var docs = doc.QuerySelectorAll("[itemprop=\"url\"]");
+                foreach (var l in docs)
+                {
+                    var lnn = l.GetAttribute("Content");
+                    if (lnn != null)
+                        ListOfLinks.Add(lnn);
+                }
+                if (pageContent.Contains("След")) {
+                    pageNum++;
+                    continue;
+                }
+                break;
+            }
+            var prin = GetProductInfo("https://www.toy.ru/catalog/toys-spetstekhnika/childs_play_lvy025_fermerskiy_traktor/", CookieRostov);//ListOfLinks[0]
+            var div1 = 10; //parser.ParseFragment("meta itemprop=<meta itemprop=\"url\" content=");
+        }
+        
+        static string GetPageFromSite(string href,string Cookie)
+        {
+            string page="";
+            var request = (HttpWebRequest)WebRequest.Create(href);
             request.Timeout = 10000;
             request.ReadWriteTimeout = 10000;
             request.ContinueTimeout = 10000;
             request.Method = "GET";
+            request.Headers.Add(Cookie);
             //request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; rv:78.0) Gecko/20100101 Firefox/78.0"; //GetUserAgent(ish);// 
             request.AutomaticDecompression = DecompressionMethods.GZip;
-            var str = ""; 
             try
             {
-                var response = (HttpWebResponse)request.GetResponse();
+                var response = request.GetResponse(); //HttpWebResponse
                 var reader = new System.IO.StreamReader(response.GetResponseStream(), Portable.Text.Encoding.GetEncoding(1251));
-                str = reader.ReadToEnd();
+                page = reader.ReadToEnd();
                 reader.Close();
             }
             catch (Exception ex)
             {
                 Thread.Sleep(3000);
             }
-
-
-            var parser = new HtmlParser();
-            var doc = parser.ParseDocument(str);
-            var docs = doc.QuerySelectorAll("[itemprop=\"url\"]");
-            var ListOfLinks = new List<string>();
-            foreach(var l in docs) {
-               var lnn = l.GetAttribute("Content");
-               if(lnn!=null)
-                    ListOfLinks.Add(lnn);
-            }
-
-            var div1 = 10; //parser.ParseFragment("meta itemprop=<meta itemprop=\"url\" content=");
+            return page;
         }
+        class productInfo
+        {
+            public productInfo(string ph) { this.productHref = ph; }
+            public string productHref;
+            public string regionName;
+            public string breadCrumbs;
+            public string productName;
+            public string price;
+            public string priceOld;
+            public string inStock;
+            public string imageHrefs;
+        }
+        static productInfo GetProductInfo(string href, string Cookie)
+        {
+            var pInfo = new productInfo(href);
+            var productPage = GetPageFromSite(href,Cookie);
+            var parser = new HtmlParser();
+            var document = parser.ParseDocument(productPage);
+            pInfo.regionName = document.QuerySelector("[data-src=\"#region\"]").TextContent.Replace("\t","").Trim();
+            var bc = document.QuerySelectorAll(".breadcrumb > a,.breadcrumb >span");
+            for (var i = 0; i < bc.Count()-1; i++) 
+            {
+                if(i==0)
+                    pInfo.breadCrumbs = bc[i].TextContent;
+                else
+                    pInfo.breadCrumbs += ">"+bc[i].TextContent;
+            }
+            pInfo.productName = document.QuerySelector(".detail-name").GetAttribute("Content");
+            pInfo.price = document.QuerySelector(".price").TextContent;
+            pInfo.priceOld = document.QuerySelector(".old-price").TextContent;
+            var imgCollection = document.QuerySelectorAll(".card-slider-for a").Select(x=>x.GetAttribute("href").Replace("?_cvc=1647661175","")).ToList();  //[0].GetAttribute("href");
+
+            for (var i = 0; i < imgCollection.Count; i++)
+            {
+                if (i == 0)
+                    pInfo.imageHrefs = imgCollection[i];
+                else
+                    pInfo.imageHrefs += " " + imgCollection[i];
+            }
+            if (productPage.Contains("Товар есть в наличии"))
+                pInfo.inStock = "В наличии";
+            else
+                pInfo.inStock = "Отсутствует";
+
+            var bb = bc;
+            return pInfo;
+        }
+
+
     }
 }
