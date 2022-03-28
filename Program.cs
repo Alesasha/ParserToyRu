@@ -27,17 +27,20 @@ namespace ParserToyRu
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
-            
+            var csvHeader = "'regionName','productName','price','priceOld','inStock','breadCrumbs','productHref','imageHrefs'";
+            string csvDump;
+
             var LinkToStartPage = "https://www.toy.ru/catalog/boy_transport/?count=45&filterseccode%5B0%5D=transport&PAGEN_8=";
             var CookieRostov = "Cookie:BITRIX_SM_city=61000001000";
-            var CookieMoscow = "";
+            var CookieMoscow = "Cookie:BITRIX_SM_city=77000000000";
+            var CityCookie = CookieRostov;
 
             int pageNum = 1;
             var ListOfLinks = new List<string>();
             while (true)
             {
                 var href = LinkToStartPage + pageNum.ToString();
-                var pageContent = GetPageFromSite(href,CookieRostov);
+                var pageContent = GetPageFromSite(href, CityCookie);
                 var parser = new HtmlParser();
                 var doc = parser.ParseDocument(pageContent);
                 var docs = doc.QuerySelectorAll("[itemprop=\"url\"]");
@@ -53,7 +56,16 @@ namespace ParserToyRu
                 }
                 break;
             }
-            var prin = GetProductInfo("https://www.toy.ru/catalog/toys-spetstekhnika/childs_play_lvy025_fermerskiy_traktor/", CookieRostov);//ListOfLinks[0]
+            csvDump = csvHeader + '\n';
+            foreach (var r in ListOfLinks)
+            {
+                var p = GetProductInfo(r, CityCookie);
+                csvDump += $"'{p.regionName}','{p.productName}','{p.price}','{p.priceOld}','{p.inStock}','{p.breadCrumbs}','{p.productHref}','{p.imageHrefs}'\n";
+            }
+
+            File.WriteAllText(@"d:\Rostov.CSV",csvDump); 
+
+            //var prin = GetProductInfo(ListOfLinks[0], CityCookie);//ListOfLinks[0]
             var div1 = 10; //parser.ParseFragment("meta itemprop=<meta itemprop=\"url\" content=");
         }
         
@@ -110,7 +122,7 @@ namespace ParserToyRu
             }
             pInfo.productName = document.QuerySelector(".detail-name").GetAttribute("Content");
             pInfo.price = document.QuerySelector(".price").TextContent;
-            pInfo.priceOld = document.QuerySelector(".old-price").TextContent;
+            pInfo.priceOld = document.QuerySelector(".old-price")?.TextContent;
             var imgCollection = document.QuerySelectorAll(".card-slider-for a").Select(x=>x.GetAttribute("href").Replace("?_cvc=1647661175","")).ToList();  //[0].GetAttribute("href");
 
             for (var i = 0; i < imgCollection.Count; i++)
@@ -125,7 +137,7 @@ namespace ParserToyRu
             else
                 pInfo.inStock = "Отсутствует";
 
-            var bb = bc;
+            //var bb = bc;
             return pInfo;
         }
 
