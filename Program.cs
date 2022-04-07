@@ -46,7 +46,7 @@ namespace ParserToyRu
         {
             var csvHeader = "'regionName','productName','price','priceOld','inStock','breadCrumbs','productHref','imageHrefs'";
             string csvDump;
-            string fileName = @"d:\MoscowT001.CSV"; // csv - file name and path
+            string fileName = @"d:\Moscow.CSV"; // csv - file name and path
             var GoodsPerPage = 45;
             var LinkToStartPage = $"https://www.toy.ru/catalog/boy_transport/?count={GoodsPerPage}&filterseccode%5B0%5D=transport&PAGEN_8=";
             var CookieRostov = "Cookie:BITRIX_SM_city=61000001000";
