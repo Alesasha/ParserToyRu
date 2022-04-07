@@ -46,7 +46,7 @@ namespace ParserToyRu
         {
             var csvHeader = "'regionName','productName','price','priceOld','inStock','breadCrumbs','productHref','imageHrefs'";
             string csvDump;
-            string fileName = @"d:\Moscow_test003.CSV"; // csv - file name and path
+            string fileName = @"d:\MoscowT001.CSV"; // csv - file name and path
             var GoodsPerPage = 45;
             var LinkToStartPage = $"https://www.toy.ru/catalog/boy_transport/?count={GoodsPerPage}&filterseccode%5B0%5D=transport&PAGEN_8=";
             var CookieRostov = "Cookie:BITRIX_SM_city=61000001000";
@@ -94,7 +94,7 @@ namespace ParserToyRu
             },TaskCreationOptions.LongRunning);
 
             while (ListOfLinks.Count == 0)
-                Thread.Sleep(10);
+                Thread.Sleep(20);
 
             var Results = new productInfo[TotalPages * GoodsPerPage]; // Results array
 
@@ -150,7 +150,7 @@ namespace ParserToyRu
             while (true)
             {
                 while (IO_Block.command == CMD.StandBy)
-                    Thread.Sleep(10);
+                    Thread.Sleep(20);
 
                 if (IO_Block.command == CMD.Exit)
                 {
@@ -182,6 +182,7 @@ namespace ParserToyRu
                 request.ReadWriteTimeout = 10000;
                 request.ContinueTimeout = 10000;
                 request.Method = "GET";
+                request.Referer="https://sbermarket.ru/"; ///auchan?sid=245
                 request.Headers.Add(Cookie);
                 request.AutomaticDecompression = DecompressionMethods.GZip;
                 try
@@ -223,7 +224,7 @@ namespace ParserToyRu
                 pInfo.productName = document.QuerySelector(".detail-name").GetAttribute("Content");
                 pInfo.price = document.QuerySelector(".price").TextContent;
                 pInfo.priceOld = document.QuerySelector(".old-price")?.TextContent;
-                var imgCollection = document.QuerySelectorAll(".card-slider-for a").Select(x => x.GetAttribute("href")).Select(x=>x.Substring(0,x.Contains("?_cvc=") ? x.Length-16 : x.Length)).ToList();  //[0].GetAttribute("href"); //Replace("?_cvc=1647661175", "")
+                var imgCollection = document.QuerySelectorAll(".card-slider-for a").Select(x => x.GetAttribute("href")).Select(x=>x.Substring(0,x.Contains("?_cvc=") ? x.Length-16 : x.Length)).ToList();
 
                 for (var i = 0; i < imgCollection.Count; i++)
                 {
