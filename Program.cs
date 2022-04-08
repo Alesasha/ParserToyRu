@@ -76,7 +76,7 @@ namespace ParserToyRu
                     var doc = parser.ParseDocument(pageContent);
                     var docs = doc.QuerySelectorAll("[itemprop=\"url\"]");
                     if (pageNum == 1)
-                        TotalPages = doc.QuerySelectorAll(".page-link").Select(x => x.InnerHtml).Where(x => Int32.TryParse(x, out int xd)).Select(x => Int32.Parse(x)).Max();
+                        TotalPages = doc.QuerySelectorAll(".page-link").Select(x => x.InnerHtml).Where(x => Int32.TryParse(x, out _)).Select(x => Int32.Parse(x)).Max();
 
                     foreach (var l in docs)
                     {
